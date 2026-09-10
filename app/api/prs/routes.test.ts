@@ -38,6 +38,7 @@ describe("PR web services", () => {
       expectedSimulationOutcome: "nominal",
       links: {
         self: "/api/prs/pr-184",
+        permalink: "/prs/pr-184",
         ticket: "/api/tickets/ticket-4821",
         rtlSimulation: "/api/prs/pr-184/rtl/simulate",
         rtlExplain: "/api/prs/pr-184/rtl/explain",

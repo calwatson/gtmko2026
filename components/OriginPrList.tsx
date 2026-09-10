@@ -1,8 +1,8 @@
+import Link from "next/link";
 import type { MockOriginPr } from "@/lib/origin/mockPrs";
 
 type OriginPrListProps = {
   pullRequests: MockOriginPr[];
-  onSelect: (pr: MockOriginPr) => void;
   onBackToTickets?: () => void;
 };
 
@@ -16,7 +16,6 @@ function OriginMark() {
 
 export function OriginPrList({
   pullRequests,
-  onSelect,
   onBackToTickets,
 }: OriginPrListProps) {
   return (
@@ -78,10 +77,9 @@ export function OriginPrList({
             const checksComplete = pr.checks.passed === pr.checks.total;
 
             return (
-              <button
+              <Link
                 key={pr.id}
-                type="button"
-                onClick={() => onSelect(pr)}
+                href={`/prs/${pr.id}`}
                 className="grid w-full grid-cols-[auto_minmax(0,1fr)] gap-3 border-b border-card-04 px-4 py-4 text-left transition-colors last:border-b-0 hover:bg-card-02 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center"
               >
                 <span className="grid size-9 place-items-center rounded-full bg-card-04 text-xs font-medium text-fg/75">
@@ -127,7 +125,7 @@ export function OriginPrList({
                   </span>
                   <span className="text-xs font-medium text-accent">Load PR →</span>
                 </span>
-              </button>
+              </Link>
             );
           })}
         </div>

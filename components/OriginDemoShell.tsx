@@ -19,19 +19,11 @@ type DemoStage = "tickets" | "list" | "detail" | "rtl" | "simulation";
 export function OriginDemoShell() {
   const [stage, setStage] = useState<DemoStage>("tickets");
   const [selectedPr, setSelectedPr] = useState<MockOriginPr | null>(null);
-  const [detailReturn, setDetailReturn] = useState<"tickets" | "list">("tickets");
-
-  function selectPullRequest(pr: MockOriginPr) {
-    setSelectedPr(pr);
-    setDetailReturn("list");
-    setStage("detail");
-  }
 
   function selectTicket(ticket: MockTicket) {
     const pullRequest = getMockOriginPr(ticket.linkedPrId);
     if (!pullRequest) return;
     setSelectedPr(pullRequest);
-    setDetailReturn("tickets");
     setStage("detail");
   }
 
@@ -49,7 +41,6 @@ export function OriginDemoShell() {
     return (
       <OriginPrList
         pullRequests={MOCK_ORIGIN_PRS}
-        onSelect={selectPullRequest}
         onBackToTickets={() => setStage("tickets")}
       />
     );
@@ -59,9 +50,9 @@ export function OriginDemoShell() {
     return (
       <OriginPrDetail
         pullRequest={selectedPr}
-        onBack={() => setStage(detailReturn)}
+        onBack={() => setStage("tickets")}
         onRun={() => setStage(selectedPr.rtlAnalysis ? "rtl" : "simulation")}
-        backLabel={detailReturn === "tickets" ? "Tickets" : "Pull requests"}
+        backLabel="Tickets"
       />
     );
   }

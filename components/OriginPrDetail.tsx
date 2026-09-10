@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { MaskPreview } from "@/components/MaskPreview";
 import { parseLayout } from "@/lib/layout/parser";
 import { loadPrSimulation } from "@/lib/origin/loadPr";
@@ -41,7 +42,15 @@ export function OriginPrDetail({
           >
             ← {backLabel}
           </button>
-          <p className="truncate text-xs text-fg/40">{pullRequest.repository}</p>
+          <div className="flex min-w-0 items-center gap-3">
+            <Link
+              href={`/prs/${pullRequest.id}`}
+              className="shrink-0 text-xs font-medium text-accent hover:brightness-110"
+            >
+              Permanent PR link
+            </Link>
+            <p className="truncate text-xs text-fg/40">{pullRequest.repository}</p>
+          </div>
         </div>
       </header>
 

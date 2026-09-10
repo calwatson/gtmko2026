@@ -19,6 +19,7 @@ function changeTotals(pr: MockOriginPr) {
 function linksFor(pr: MockOriginPr) {
   return {
     self: `/api/prs/${pr.id}`,
+    permalink: `/prs/${pr.id}`,
     ticket: `/api/tickets/${pr.ticketId}`,
     ...(pr.rtlAnalysis
       ? {
