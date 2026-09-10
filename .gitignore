@@ -42,5 +42,5 @@ yarn-error.log*
 next-env.d.ts
 
 # verilog simulation
-hw/nano8/build/
+hw/*/build/
 *.vcd
