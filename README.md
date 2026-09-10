@@ -1,28 +1,79 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 # gtmko2026
 
 # ASML Plugin Marketplace
 - [asml-plugin-marketplace](https://github.com/damien-xai/asml-plugin-marketplace)
 =======
 # Scanner imaging demo (Grok Imagine)
+=======
+# Ticket-to-schematic and scanner demo
+>>>>>>> 33a5827 (schematics)
 
-Load a mocked Cursor Origin pull request, inspect its RTL diff and CI-generated
-layout artifact, then render what the scanner prints with
-`grok-imagine-image-2.0`.
+Open a mocked hardware ticket, inspect the developer’s Verilog pull request,
+replay deterministic RTL verification, and see the failing path highlighted in
+a generated schematic. Grok explains that fixed evidence; PRs that pass can
+continue into the scanner imaging demo.
 
 Built for an ASML audience: the knobs are scanner settings (system, illumination, dose, focus), not fab process settings.
 
 ## Origin mock workflow
 
-The first screen contains three local PR fixtures. Each PR has mocked review
-metadata, source diffs, checks, and a deterministic GDS or layout-recipe
-payload. Loading a PR follows this demo path:
+The first screen contains three local ticket fixtures linked to three PRs. The
+primary path follows:
 
-`RTL change → mocked synthesis/place-and-route → layout artifact → scanner simulation`
+`Ticket → Verilog PR → CI replay → failing assertion → highlighted schematic → Grok diagnosis`
 
-No live Origin account, repository, auth, synthesis, or place-and-route service
-is used. The TinyTapeout PR loads the authentic SKY130 crop; the other PRs load
-clearly labeled synthetic 5 nm layouts.
+PR `pr-184` fails `accumulator_holds_when_disabled` and is blocked before
+lithography. Its simulator trace and Yosys-style netlist are precomputed,
+versioned fixtures rather than runtime EDA execution. The other PRs continue to
+the existing Grok Imagine wafer flow.
+
+The schematic highlight is deterministic: the assertion maps to stable node and
+edge IDs. Grok’s language model explains those IDs and values; Grok Imagine
+does not choose or draw the error location.
+
+## Bot web services
+
+The mocked PR workflow is available as JSON endpoints for a Grok bot or other
+server-to-server client:
+
+- `GET /api/prs` lists PR summaries and links.
+- `POST /api/prs` always returns the mocked PR #184 with HTTP `201`.
+- `GET /api/prs/:id` returns the full diff, artifact metadata, and recommended
+  scanner settings.
+- `GET /api/tickets` and `GET /api/tickets/:id` expose mocked incoming work.
+- `POST /api/prs/:id/rtl/simulate` replays deterministic RTL verification.
+- `POST /api/prs/:id/rtl/explain` asks Grok to explain the fixed failure
+  evidence.
+- `GET /api/runs/rtl-run-pr-184-001` returns the immutable saved result.
+- `/runs/rtl-run-pr-184-001` is the permanent read-only browser link.
+- `POST /api/prs/:id/simulate` runs Grok Imagine for that PR and returns the
+  parameters, prompt, and wafer image data URL.
+
+The simulation endpoint accepts an optional partial `params` object. Omitted
+settings use the PR's recommended values:
+
+```bash
+export BASE_URL=http://localhost:3000
+
+curl "$BASE_URL/api/prs"
+curl -X POST "$BASE_URL/api/prs"
+curl "$BASE_URL/api/tickets/ticket-4821"
+curl -X POST "$BASE_URL/api/prs/pr-184/rtl/simulate"
+curl -X POST "$BASE_URL/api/prs/pr-184/rtl/explain"
+curl "$BASE_URL/api/runs/rtl-run-pr-184-001"
+curl -X POST "$BASE_URL/api/prs/pr-179/simulate" \
+  -H "Content-Type: application/json" \
+  -d '{"params":{"scanner":"nxe3800e","doseMJcm2":48}}'
+```
+
+PR `pr-184` returns HTTP `422` with `RTL_ASSERT_FAIL` from the RTL endpoint.
+Its lithography endpoint returns HTTP `409` until that failure is fixed. The
+other PRs return generated wafer images.
+
+These demo endpoints have no authentication. Add service authentication before
+deploying them with non-mocked repository data.
 
 ## What is computed vs generated
 

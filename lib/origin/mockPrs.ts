@@ -30,14 +30,20 @@ export type MockOriginPr = {
   updated: string;
   status: "ready" | "draft";
   summary: string;
+  ticketId: string;
   checks: {
     passed: number;
     total: number;
   };
   files: MockDiffFile[];
   artifact: MockGdsArtifact;
+  rtlAnalysis?: {
+    fixtureId: string;
+    expectedOutcome: "pass" | "fail";
+  };
   simulation: {
     exampleId: ExampleId;
+    expectedOutcome: "nominal" | "defective";
     recipe?: string;
     params?: Partial<LithoParams>;
   };
@@ -73,8 +79,9 @@ export const MOCK_ORIGIN_PRS: MockOriginPr[] = [
     updated: "12 min ago",
     status: "ready",
     summary:
-      "Adds a registered accumulation stage to improve timing through the SKY130 multiplier datapath.",
-    checks: { passed: 6, total: 6 },
+      "Adds a registered accumulation stage to improve timing, but the hold behavior now fails when enable is low.",
+    ticketId: "ticket-4821",
+    checks: { passed: 5, total: 6 },
     files: [
       {
         path: "src/spm.sv",
@@ -93,7 +100,7 @@ export const MOCK_ORIGIN_PRS: MockOriginPr[] = [
    always_ff @(posedge clk) begin
 -    if (enable) accumulator <= partial_sum;
 +    if (reset) accumulator <= '0;
-+    else if (enable) accumulator <= next_sum;
++    else accumulator <= next_sum;
    end
  endmodule`,
       },
@@ -106,8 +113,13 @@ export const MOCK_ORIGIN_PRS: MockOriginPr[] = [
       polygonCount: 1783,
       layerCount: 11,
     },
+    rtlAnalysis: {
+      fixtureId: "rtl-pr-184-v1",
+      expectedOutcome: "fail",
+    },
     simulation: {
       exampleId: "tinytapeout-sky130",
+      expectedOutcome: "nominal",
     },
   },
   {
@@ -123,6 +135,7 @@ export const MOCK_ORIGIN_PRS: MockOriginPr[] = [
     status: "ready",
     summary:
       "Duplicates the multiply-accumulate datapath and balances the output register stage.",
+    ticketId: "ticket-4796",
     checks: { passed: 6, total: 6 },
     files: [
       {
@@ -169,6 +182,7 @@ export const MOCK_ORIGIN_PRS: MockOriginPr[] = [
     },
     simulation: {
       exampleId: "synthetic-5nm",
+      expectedOutcome: "nominal",
       recipe: MAC_ARRAY_RECIPE,
       params: {
         scanner: "exe5200",
@@ -190,6 +204,7 @@ export const MOCK_ORIGIN_PRS: MockOriginPr[] = [
     status: "draft",
     summary:
       "Adds a balanced scan-enable tree to reduce fanout on the control path before sign-off.",
+    ticketId: "ticket-4772",
     checks: { passed: 4, total: 5 },
     files: [
       {
@@ -223,6 +238,7 @@ export const MOCK_ORIGIN_PRS: MockOriginPr[] = [
     },
     simulation: {
       exampleId: "synthetic-5nm",
+      expectedOutcome: "nominal",
       recipe: SCAN_FANOUT_RECIPE,
       params: {
         scanner: "nxe3800e",

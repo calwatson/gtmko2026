@@ -71,22 +71,32 @@ export function LithoDemo({ initialPayload, pullRequest, onBack }: LithoDemoProp
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("/api/imagine", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipe, params }),
-      });
+      const response = await fetch(
+        pullRequest ? `/api/prs/${pullRequest.id}/simulate` : "/api/imagine",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(pullRequest ? { params } : { recipe, params }),
+        },
+      );
       const data = (await response.json()) as {
         imageDataUrl?: string;
         prompt?: string;
         error?: string;
+        simulation?: {
+          imageDataUrl?: string;
+          prompt?: string;
+        };
       };
+      const simulation = data.simulation ?? data;
       if (!response.ok) {
+        setImageDataUrl(simulation.imageDataUrl ?? null);
+        setPrompt(simulation.prompt ?? null);
         setError(data.error ?? `Request failed (${response.status})`);
         return;
       }
-      setImageDataUrl(data.imageDataUrl ?? null);
-      setPrompt(data.prompt ?? null);
+      setImageDataUrl(simulation.imageDataUrl ?? null);
+      setPrompt(simulation.prompt ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Network error");
     } finally {
@@ -143,6 +153,11 @@ export function LithoDemo({ initialPayload, pullRequest, onBack }: LithoDemoProp
               <p className="mt-1 text-sm text-fg/80">
                 PR #{pullRequest.number} at <code>{pullRequest.branch}</code>
               </p>
+              {pullRequest.simulation.expectedOutcome === "defective" ? (
+                <p className="mt-2 rounded-md bg-accent/10 px-2 py-1.5 text-[11px] text-accent">
+                  Defect excursion: low dose and severe defocus are preloaded.
+                </p>
+              ) : null}
               <p className="mt-1 text-[11px] leading-4 text-fg/45">
                 RTL-to-GDS generation is mocked. The mask below is deterministic from this loaded
                 artifact.
@@ -170,10 +185,10 @@ export function LithoDemo({ initialPayload, pullRequest, onBack }: LithoDemoProp
             value={recipe}
             onChange={setRecipe}
             errors={layout.errors}
-            disabled={loading}
+            disabled={loading || Boolean(pullRequest)}
           />
           <RecipeDetails layout={layout} />
-          {layout.provenance.kind === "synthetic" ? (
+          {layout.provenance.kind === "synthetic" && !pullRequest ? (
             <div className="flex gap-2">
               <button
                 type="button"

@@ -2,11 +2,13 @@ import { MaskPreview } from "@/components/MaskPreview";
 import { parseLayout } from "@/lib/layout/parser";
 import { loadPrSimulation } from "@/lib/origin/loadPr";
 import type { MockOriginPr } from "@/lib/origin/mockPrs";
+import { getTicketForPr } from "@/lib/origin/mockTickets";
 
 type OriginPrDetailProps = {
   pullRequest: MockOriginPr;
   onBack: () => void;
   onRun: () => void;
+  backLabel?: string;
 };
 
 function patchLineClass(line: string): string {
@@ -16,9 +18,15 @@ function patchLineClass(line: string): string {
   return "text-fg/55";
 }
 
-export function OriginPrDetail({ pullRequest, onBack, onRun }: OriginPrDetailProps) {
+export function OriginPrDetail({
+  pullRequest,
+  onBack,
+  onRun,
+  backLabel = "Pull requests",
+}: OriginPrDetailProps) {
   const payload = loadPrSimulation(pullRequest);
   const layout = parseLayout(payload.recipe);
+  const ticket = getTicketForPr(pullRequest.id);
   const additions = pullRequest.files.reduce((sum, file) => sum + file.additions, 0);
   const deletions = pullRequest.files.reduce((sum, file) => sum + file.deletions, 0);
 
@@ -31,7 +39,7 @@ export function OriginPrDetail({ pullRequest, onBack, onRun }: OriginPrDetailPro
             onClick={onBack}
             className="text-xs text-fg/55 hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
           >
-            ← Pull requests
+            ← {backLabel}
           </button>
           <p className="truncate text-xs text-fg/40">{pullRequest.repository}</p>
         </div>
@@ -50,6 +58,16 @@ export function OriginPrDetail({ pullRequest, onBack, onRun }: OriginPrDetailPro
               <span className="text-[11px] text-fg/40">
                 {pullRequest.checks.passed}/{pullRequest.checks.total} checks passing
               </span>
+              {pullRequest.simulation.expectedOutcome === "defective" ? (
+                <span className="rounded-full bg-accent/15 px-2.5 py-1 text-[11px] text-accent">
+                  Intentional defect excursion
+                </span>
+              ) : null}
+              {pullRequest.rtlAnalysis?.expectedOutcome === "fail" ? (
+                <span className="rounded-full bg-accent/15 px-2.5 py-1 text-[11px] text-accent">
+                  RTL check required
+                </span>
+              ) : null}
             </div>
             <h1 className="mt-3 text-2xl font-medium tracking-tight">{pullRequest.title}</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-fg/55">{pullRequest.summary}</p>
@@ -58,6 +76,17 @@ export function OriginPrDetail({ pullRequest, onBack, onRun }: OriginPrDetailPro
               <code className="text-fg/65">{pullRequest.branch}</code> into{" "}
               <code className="text-fg/65">{pullRequest.baseBranch}</code>
             </p>
+            {ticket ? (
+              <div className="mt-3 flex max-w-3xl items-start gap-3 rounded-lg bg-card px-3 py-2.5">
+                <span className="rounded bg-card-04 px-2 py-1 font-mono text-[10px] text-fg/55">
+                  {ticket.key}
+                </span>
+                <div>
+                  <p className="text-xs font-medium text-fg/75">{ticket.title}</p>
+                  <p className="mt-0.5 text-[11px] leading-4 text-fg/40">{ticket.actualBehavior}</p>
+                </div>
+              </div>
+            ) : null}
           </div>
           <div className="flex shrink-0 items-center gap-3 text-xs">
             <span className="text-fg/45">+{additions}</span>
@@ -67,7 +96,7 @@ export function OriginPrDetail({ pullRequest, onBack, onRun }: OriginPrDetailPro
               onClick={onRun}
               className="rounded-lg bg-accent px-4 py-2.5 font-medium text-white hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
-              Run lithography simulation
+              {pullRequest.rtlAnalysis ? "Run RTL simulation" : "Run lithography simulation"}
             </button>
           </div>
         </div>
@@ -109,7 +138,48 @@ export function OriginPrDetail({ pullRequest, onBack, onRun }: OriginPrDetailPro
           </section>
 
           <aside className="flex min-w-0 flex-col gap-4">
-            <section className="rounded-xl bg-card p-4">
+            {pullRequest.rtlAnalysis ? (
+              <section className="rounded-xl bg-card p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs tracking-[0.15em] text-accent uppercase">
+                      RTL verification
+                    </p>
+                    <h2 className="mt-1 text-sm font-medium">CI replay ready</h2>
+                  </div>
+                  <span className="rounded-full bg-card-03 px-2.5 py-1 text-[11px] text-fg/60">
+                    Pending
+                  </span>
+                </div>
+                <div className="mt-4 space-y-2 text-xs">
+                  {[
+                    ["Verilog source", pullRequest.files[0]?.path ?? "src/spm.sv"],
+                    ["Testbench", "tb.spm_pipeline"],
+                    ["Schematic", "Precomputed Yosys netlist"],
+                    ["GDS generation", "Blocked until RTL passes"],
+                  ].map(([label, value], index) => (
+                    <div
+                      key={label}
+                      className="flex items-center justify-between gap-4 rounded-lg bg-card-02 px-3 py-2.5"
+                    >
+                      <span className="flex items-center gap-2 text-fg/55">
+                        <span className="grid size-4 place-items-center rounded-full bg-card-04 text-[9px] text-fg/65">
+                          {index + 1}
+                        </span>
+                        {label}
+                      </span>
+                      <span className="text-right text-fg/40">{value}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-4 text-[11px] leading-4 text-fg/40">
+                  The next step replays a fixed simulator trace and maps its assertion failure to
+                  stable node IDs in the generated schematic.
+                </p>
+              </section>
+            ) : (
+              <>
+                <section className="rounded-xl bg-card p-4">
               <div className="mb-4 flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs tracking-[0.15em] text-accent uppercase">
@@ -161,7 +231,9 @@ export function OriginPrDetail({ pullRequest, onBack, onRun }: OriginPrDetailPro
               </p>
             </section>
 
-            <MaskPreview layout={layout} />
+                <MaskPreview layout={layout} />
+              </>
+            )}
           </aside>
         </div>
       </main>

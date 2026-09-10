@@ -3,6 +3,8 @@ import { parseLayout } from "@/lib/layout/parser";
 import { ILLUMINATIONS, SCANNERS } from "@/lib/litho/optics";
 import { loadPrSimulation } from "@/lib/origin/loadPr";
 import { getMockOriginPr, MOCK_ORIGIN_PRS } from "@/lib/origin/mockPrs";
+import { getTicketForPr, MOCK_TICKETS } from "@/lib/origin/mockTickets";
+import { loadRtlAnalysis } from "@/lib/rtl/loadRtlAnalysis";
 
 describe("mock Origin pull requests", () => {
   it("provides distinct PRs with review and artifact metadata", () => {
@@ -35,5 +37,27 @@ describe("mock Origin pull requests", () => {
     for (const pr of syntheticPrs) {
       expect(parseLayout(loadPrSimulation(pr).recipe).provenance.kind).toBe("synthetic");
     }
+  });
+
+  it("links every PR to a ticket", () => {
+    expect(MOCK_TICKETS).toHaveLength(MOCK_ORIGIN_PRS.length);
+    for (const pullRequest of MOCK_ORIGIN_PRS) {
+      expect(getTicketForPr(pullRequest.id)?.id).toBe(pullRequest.ticketId);
+    }
+  });
+
+  it("loads the first PR as a deterministic RTL failure", () => {
+    const pullRequest = MOCK_ORIGIN_PRS[0];
+    const analysis = loadRtlAnalysis(pullRequest);
+
+    expect(pullRequest.rtlAnalysis?.expectedOutcome).toBe("fail");
+    expect(pullRequest.simulation.expectedOutcome).toBe("nominal");
+    expect(analysis?.status).toBe("failed");
+    expect(analysis?.failure).toMatchObject({
+      code: "RTL_ASSERT_FAIL",
+      failingNodeId: "accumulator_ff",
+      expected: "16'h00A5",
+      actual: "16'h014A",
+    });
   });
 });

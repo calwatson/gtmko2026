@@ -3,6 +3,7 @@ import type { MockOriginPr } from "@/lib/origin/mockPrs";
 type OriginPrListProps = {
   pullRequests: MockOriginPr[];
   onSelect: (pr: MockOriginPr) => void;
+  onBackToTickets?: () => void;
 };
 
 function OriginMark() {
@@ -13,7 +14,11 @@ function OriginMark() {
   );
 }
 
-export function OriginPrList({ pullRequests, onSelect }: OriginPrListProps) {
+export function OriginPrList({
+  pullRequests,
+  onSelect,
+  onBackToTickets,
+}: OriginPrListProps) {
   return (
     <div className="min-h-full bg-bg text-fg">
       <header className="border-b border-card-04">
@@ -25,9 +30,20 @@ export function OriginPrList({ pullRequests, onSelect }: OriginPrListProps) {
               <p className="text-xs text-fg/45">Mock code review workspace</p>
             </div>
           </div>
-          <span className="rounded-full bg-card-03 px-3 py-1 text-xs text-fg/60">
-            Demo data
-          </span>
+          <div className="flex items-center gap-2">
+            {onBackToTickets ? (
+              <button
+                type="button"
+                onClick={onBackToTickets}
+                className="rounded-md px-3 py-1 text-xs text-fg/55 hover:text-fg"
+              >
+                Tickets
+              </button>
+            ) : null}
+            <span className="rounded-full bg-card-03 px-3 py-1 text-xs text-fg/60">
+              Demo data
+            </span>
+          </div>
         </div>
       </header>
 
@@ -77,6 +93,16 @@ export function OriginPrList({ pullRequests, onSelect }: OriginPrListProps) {
                     {pr.status === "draft" ? (
                       <span className="rounded bg-card-04 px-1.5 py-0.5 text-[10px] text-fg/50">
                         Draft
+                      </span>
+                    ) : null}
+                    {pr.simulation.expectedOutcome === "defective" ? (
+                      <span className="rounded bg-accent/15 px-1.5 py-0.5 text-[10px] text-accent">
+                        Defect case
+                      </span>
+                    ) : null}
+                    {pr.rtlAnalysis?.expectedOutcome === "fail" ? (
+                      <span className="rounded bg-accent/15 px-1.5 py-0.5 text-[10px] text-accent">
+                        RTL failure
                       </span>
                     ) : null}
                   </span>

@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Origin PR lithography simulation",
+  title: "Origin RTL schematic diagnosis",
   description:
-    "Load a mocked Origin PR, inspect its generated layout, and simulate the printed wafer with Grok Imagine.",
+    "Trace a mocked hardware ticket through Verilog verification, highlighted schematics, and grounded Grok diagnosis.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
